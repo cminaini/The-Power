@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#101827">
+<title>Bankroll — Straight Bet Tracker</title>
+<style>
+:root{--bg:#0b1220;--panel:#121d2e;--panel2:#18263a;--line:#28384f;--text:#f2f6fc;--muted:#a8b6c9;--green:#46d39a;--red:#ff7777;--blue:#7bb7ff;--gold:#f6c76a}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#0e1828 0%,var(--bg) 50%);color:var(--text);font:16px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.wrap{max-width:820px;margin:0 auto;padding:20px 16px calc(36px + env(safe-area-inset-bottom))}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+.brand{display:flex;align-items:center;gap:10px}.logo{width:42px;height:42px;border-radius:14px;background:linear-gradient(135deg,#4de0a3,#65aaff);display:grid;place-items:center;color:#0b1220;font-weight:900;font-size:20px}
+h1{font-size:23px;margin:0;letter-spacing:-.5px} .sub{font-size:12px;color:var(--muted);margin-top:2px}
+button,.btn{border:1px solid var(--line);border-radius:12px;padding:11px 14px;background:var(--panel2);color:var(--text);font-weight:650;font-size:14px;cursor:pointer}
+button.primary{background:var(--green);color:#082319;border-color:transparent}button.danger{color:var(--red)}button:active{transform:scale(.985)}
+.nav{display:flex;gap:8px;margin:0 0 16px}.nav button{flex:1}.nav button.active{background:#dffbef;color:#09271c;border-color:#dffbef}
+.page{display:none}.page.active{display:block}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.metric{background:var(--panel);border:1px solid var(--line);border-radius:17px;padding:15px;min-width:0}.metric .label{color:var(--muted);font-size:12px}.metric .value{font-size:25px;font-weight:800;letter-spacing:-.6px;margin-top:5px;overflow-wrap:anywhere}.metric .hint{color:var(--muted);font-size:11px;margin-top:4px}
+.green{color:var(--green)!important}.red{color:var(--red)!important}.blue{color:var(--blue)!important}
+.card{margin-top:13px;background:var(--panel);border:1px solid var(--line);border-radius:17px;padding:16px}
+.card h2{font-size:17px;margin:0 0 12px}.card p{color:var(--muted);font-size:13px;margin:0 0 12px}
+.row{display:flex;gap:10px}.row>*{flex:1;min-width:0}
+label{display:block;color:var(--muted);font-size:12px;margin:0 0 6px}
+input,select{width:100%;background:#0c1524;color:var(--text);border:1px solid var(--line);border-radius:11px;padding:12px;font-size:16px;outline:none}
+input:focus,select:focus{border-color:var(--blue)}.field{margin-bottom:12px}
+.actions{display:flex;gap:8px;flex-wrap:wrap}.actions button{flex:1}
+.small{font-size:12px;color:var(--muted)}.notice{border-left:3px solid var(--gold);padding:10px 12px;background:#2a2519;border-radius:8px;color:#f7deb0;font-size:12px;margin-top:12px}
+.mode{display:flex;gap:8px}.mode button{flex:1}.mode button.selected{border-color:var(--green);box-shadow:inset 0 0 0 1px var(--green)}
+.hidden{display:none!important}
+.history-item{padding:13px 0;border-bottom:1px solid var(--line)}.history-item:last-child{border-bottom:0}.history-top{display:flex;justify-content:space-between;gap:12px;align-items:start}.history-title{font-weight:700}.history-meta{font-size:12px;color:var(--muted);margin-top:3px}.history-bottom{display:flex;gap:14px;flex-wrap:wrap;margin-top:8px;font-size:12px;color:var(--muted)}
+.pill{display:inline-block;padding:4px 8px;border-radius:999px;font-size:11px;font-weight:700;background:#20334a;color:#cfe3fa}.pill.win{background:#123e31;color:#8af0c3}.pill.loss{background:#49252b;color:#ffaaaa}
+.empty{text-align:center;color:var(--muted);padding:25px 8px;font-size:13px}
+hr{border:0;border-top:1px solid var(--line);margin:14px 0}
+.footer{font-size:11px;color:var(--muted);text-align:center;margin-top:18px}
+@media(min-width:620px){.grid{grid-template-columns:repeat(4,minmax(0,1fr))}.metric .value{font-size:23px}.wrap{padding-top:28px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+ <div class="brand"><div class="logo">B</div><div><h1>Bankroll</h1><div class="sub">Straight bets · No chasing · Track your edge</div></div></div>
+ <button id="settingsShortcut">Settings</button>
+</header>
+<div class="nav">
+ <button class="active" data-page="dashboard">Dashboard</button>
+ <button data-page="record">Record bets</button>
+ <button data-page="history">History</button>
+ <button data-page="settings">Settings</button>
+</div>
+
+<section class="page active" id="dashboard">
+ <div class="grid">
+  <div class="metric"><div class="label">Current bankroll</div><div class="value" id="bankrollMetric">$200.00</div><div class="hint">Starting balance + recorded results</div></div>
+  <div class="metric"><div class="label">Net profit / loss</div><div class="value" id="profitMetric">$0.00</div><div class="hint" id="returnHint">0.0% return</div></div>
+  <div class="metric"><div class="label">Win rate</div><div class="value" id="winRateMetric">—</div><div class="hint" id="recordHint">No bets recorded yet</div></div>
+  <div class="metric"><div class="label">Bets placed</div><div class="value" id="betsMetric">0</div><div class="hint" id="winsLossesHint">0 wins · 0 losses</div></div>
+ </div>
+ <div class="card">
+  <h2>Quick snapshot</h2>
+  <div class="row">
+   <div><label>Default odds</label><div class="value" id="oddsSnapshot" style="font-size:20px;font-weight:800">1.44</div></div>
+   <div><label>Next stake</label><div class="value" id="stakeSnapshot" style="font-size:20px;font-weight:800">$10.00</div></div>
+   <div><label>Profit per win</label><div class="value green" id="winProfitSnapshot" style="font-size:20px;font-weight:800">$4.40</div></div>
+  </div>
+  <hr>
+  <div class="row">
+   <div><label>Today / recent 24h</label><div id="recentMetric" style="font-size:17px;font-weight:750">$0.00</div><div class="small" id="recentBets">0 bets recorded</div></div>
+   <div><label>Open batches</label><div id="batchMetric" style="font-size:17px;font-weight:750">0</div><div class="small">Batch entries in history</div></div>
+  </div>
+  <div class="actions" style="margin-top:14px"><button class="primary" data-go="record">+ Record results</button><button data-go="history">View history</button></div>
+ </div>
+ <div class="notice">Tracking tool only. Past results do not guarantee future wins. This app records straight-bet results; it does not recommend bets or guarantee a win rate.</div>
+</section>
+
+<section class="page" id="record">
+ <div class="card">
+  <h2>Record a batch</h2>
+  <p>Use this when you selected several matches during the same period. Enter how many were placed and how many won. The app calculates the rest using the settings below.</p>
+  <div class="row">
+   <div class="field"><label for="batchCount">Bets placed</label><input id="batchCount" type="number" min="1" step="1" value="3"></div>
+   <div class="field"><label for="batchWins">Bets won</label><input id="batchWins" type="number" min="0" step="1" value="2"></div>
+  </div>
+  <div class="row">
+   <div class="field"><label for="batchOdds">Average decimal odds</label><input id="batchOdds" type="number" min="1.01" step="0.01" value="1.44"></div>
+   <div class="field"><label for="batchStake">Stake per bet ($)</label><input id="batchStake" type="number" min="0.01" step="0.01" value="10"></div>
+  </div>
+  <div class="field"><label for="batchLabel">Batch label (optional)</label><input id="batchLabel" type="text" maxlength="60" placeholder="e.g. Thursday afternoon"></div>
+  <div class="small" id="batchPreview">Preview: 2 wins, 1 loss</div>
+  <div class="actions" style="margin-top:13px"><button class="primary" id="saveBatch">Save batch results</button></div>
+ </div>
+ <div class="card">
+  <h2>Record one bet</h2>
+  <p>For tracking a single match with its own odds and stake.</p>
+  <div class="field"><label for="singleLabel">Match / note (optional)</label><input id="singleLabel" type="text" maxlength="80" placeholder="Player or match note"></div>
+  <div class="row">
+   <div class="field"><label for="singleOdds">Decimal odds</label><input id="singleOdds" type="number" min="1.01" step="0.01" value="1.44"></div>
+   <div class="field"><label for="singleStake">Stake ($)</label><input id="singleStake" type="number" min="0.01" step="0.01" value="10"></div>
+  </div>
+  <div class="field"><label>Result</label><div class="mode"><button type="button" class="selected" id="singleWin" data-result="win">Won</button><button type="button" id="singleLoss" data-result="loss">Lost</button><button type="button" id="singlePending" data-result="pending">Pending</button></div></div>
+  <div class="actions"><button class="primary" id="saveSingle">Save single bet</button></div>
+ </div>
+</section>
+
+<section class="page" id="history">
+ <div class="card">
+  <div class="row" style="align-items:center"><div><h2 style="margin:0">History</h2><div class="small">Most recent first</div></div><button id="exportCsv">Export CSV</button></div>
+  <div class="field" style="margin-top:13px"><label for="historyFilter">Show</label><select id="historyFilter"><option value="all">All records</option><option value="batch">Batches only</option><option value="single">Single bets only</option></select></div>
+  <div id="historyList"><div class="empty">No bets recorded yet.</div></div>
+ </div>
+</section>
+
+<section class="page" id="settings">
+ <div class="card">
+  <h2>Bankroll & staking</h2>
+  <p>These settings affect new records only. Existing history remains unchanged.</p>
+  <div class="field"><label for="startingBankroll">Starting bankroll ($)</label><input id="startingBankroll" type="number" min="0" step="0.01" value="200"></div>
+  <div class="field"><label>Stake method</label><div class="mode"><button type="button" id="fixedMode" class="selected">Fixed stake</button><button type="button" id="percentMode">Compound (% bankroll)</button></div></div>
+  <div class="field" id="fixedField"><label for="fixedStake">Fixed stake per bet ($)</label><input id="fixedStake" type="number" min="0.01" step="0.01" value="10"></div>
+  <div class="field hidden" id="percentField"><label for="stakePercent">Stake as % of current bankroll</label><input id="stakePercent" type="number" min="0.1" max="100" step="0.1" value="5"></div>
+  <div class="field"><label for="defaultOdds">Default decimal odds</label><input id="defaultOdds" type="number" min="1.01" step="0.01" value="1.44"></div>
+  <div class="actions"><button class="primary" id="saveSettings">Save settings</button><button id="resetSettings" class="danger">Reset app</button></div>
+  <div class="notice">Compounding means the suggested stake changes with the recorded bankroll. It does not improve the odds or make the strategy profitable by itself. Only use money you can afford to lose.</div>
+ </div>
+</section>
+<div class="footer">Saved on this device/browser. Export CSV regularly if you want a backup.</div>
+</div>
+<script>
+(function(){
+const KEY='bankrollTracker_v1';
+const defaults={starting:200,method:'fixed',fixedStake:10,percent:5,odds:1.44,records:[]};
+let state=load();
+let singleResult='win';
+function load(){try{const x=JSON.parse(localStorage.getItem(KEY));return x?{...defaults,...x,records:Array.isArray(x.records)?x.records:[]}:structuredClone(defaults)}catch(e){return JSON.parse(JSON.stringify(defaults))}}
+function save(){localStorage.setItem(KEY,JSON.stringify(state));render()}
+function money(n){return (n<0?'−':'')+'$'+Math.abs(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}
+function currentBankroll(){return state.starting+state.records.filter(r=>r.result!=='pending').reduce((s,r)=>s+r.pnl,0)}
+function settled(){return state.records.filter(r=>r.result!=='pending')}
+function stats(){let rs=settled(),w=rs.filter(r=>r.result==='win').reduce((s,r)=>s+r.count,0),l=rs.filter(r=>r.result==='loss').reduce((s,r)=>s+r.count,0),bets=w+l,profit=rs.reduce((s,r)=>s+r.pnl,0);return{w,l,bets,profit,rate:bets?w/bets*100:null}}
+function suggestedStake(){return state.method==='percent'?Math.max(0,currentBankroll()*state.percent/100):state.fixedStake}
+function nav(page){document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id===page));document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===page));if(page==='history')renderHistory();window.scrollTo({top:0,behavior:'smooth'})}
+document.querySelectorAll('.nav button').forEach(b=>b.addEventListener('click',()=>nav(b.dataset.page)));
+document.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click',()=>nav(b.dataset.go)));
+document.getElementById('settingsShortcut').onclick=()=>nav('settings');
+function render(){
+const s=stats(),bal=currentBankroll();
+const profitEl=document.getElementById('profitMetric');document.getElementById('bankrollMetric').textContent=money(bal);
+profitEl.textContent=money(s.profit);profitEl.className='value '+(s.profit>0?'green':s.profit<0?'red':'');
+document.getElementById('returnHint').textContent=(state.starting?((s.profit/state.starting)*100).toFixed(1):'0.0')+'% return on starting bankroll';
+document.getElementById('winRateMetric').textContent=s.rate===null?'—':s.rate.toFixed(1)+'%';
+document.getElementById('recordHint').textContent=s.bets?`${s.w} wins / ${s.l} losses`:'No settled bets yet';
+document.getElementById('betsMetric').textContent=s.bets;
+document.getElementById('winsLossesHint').textContent=`${s.w} wins · ${s.l} losses`;
+document.getElementById('oddsSnapshot').textContent=Number(state.odds).toFixed(2);
+document.getElementById('stakeSnapshot').textContent=money(suggestedStake());
+document.getElementById('winProfitSnapshot').textContent=money(suggestedStake()*(state.odds-1));
+const now=Date.now(),recent=state.records.filter(r=>new Date(r.date).getTime()>=now-24*3600*1000),recentP=recent.reduce((a,r)=>a+(r.result==='pending'?0:r.pnl),0),recentB=recent.reduce((a,r)=>a+r.count,0);
+document.getElementById('recentMetric').textContent=money(recentP);document.getElementById('recentBets').textContent=recentB+' bets recorded in last 24h';document.getElementById('batchMetric').textContent=state.records.filter(r=>r.type==='batch').length;
+document.getElementById('startingBankroll').value=state.starting;document.getElementById('fixedStake').value=state.fixedStake;document.getElementById('stakePercent').value=state.percent;document.getElementById('defaultOdds').value=state.odds;
+document.getElementById('fixedMode').classList.toggle('selected',state.method==='fixed');document.getElementById('percentMode').classList.toggle('selected',state.method==='percent');document.getElementById('fixedField').classList.toggle('hidden',state.method!=='fixed');document.getElementById('percentField').classList.toggle('hidden',state.method!=='percent');
+document.getElementById('batchOdds').value=document.getElementById('batchOdds').value||state.odds;document.getElementById('batchStake').value=document.getElementById('batchStake').value||suggestedStake();document.getElementById('singleOdds').value=document.getElementById('singleOdds').value||state.odds;document.getElementById('singleStake').value=document.getElementById('singleStake').value||suggestedStake();
+renderHistory();preview();
+}
+function preview(){let n=+document.getElementById('batchCount').value||0,w=+document.getElementById('batchWins').value||0;document.getElementById('batchPreview').textContent=`Preview: ${w} wins, ${Math.max(0,n-w)} losses · ${n} bets total`;}
+['batchCount','batchWins'].forEach(id=>document.getElementById(id).addEventListener('input',preview));
+function pnlFor(result,count,stake,odds){if(result==='pending')return 0;if(result==='win')return count*stake*(odds-1);return -count*stake}
+function addRecord(r){state.records.push({...r,id:Date.now().toString(36)+Math.random().toString(36).slice(2,7),date:new Date().toISOString()});save()}
+document.getElementById('saveBatch').onclick=()=>{
+let n=Number(document.getElementById('batchCount').value),w=Number(document.getElementById('batchWins').value),o=Number(document.getElementById('batchOdds').value),stake=Number(document.getElementById('batchStake').value),label=document.getElementById('batchLabel').value.trim();
+if(!Number.isInteger(n)||n<1||!Number.isInteger(w)||w<0||w>n||!Number.isFinite(o)||o<=1||!Number.isFinite(stake)||stake<=0){alert('Check the number of bets, wins, odds, and stake. Wins must be between 0 and bets placed.');return}
+let l=n-w,pnl=w*stake*(o-1)-l*stake;
+addRecord({type:'batch',label:label||`${n}-bet batch`,count:n,wins:w,losses:l,odds:o,stake,result:'settled',pnl});
+document.getElementById('batchLabel').value='';document.getElementById('batchWins').value='';document.getElementById('batchCount').value='3';document.getElementById('batchOdds').value=state.odds;document.getElementById('batchStake').value=suggestedStake();nav('dashboard');
+};
+document.querySelectorAll('[data-result]').forEach(b=>b.onclick=()=>{singleResult=b.dataset.result;document.querySelectorAll('[data-result]').forEach(x=>x.classList.toggle('selected',x===b));});
+document.getElementById('saveSingle').onclick=()=>{
+let o=Number(document.getElementById('singleOdds').value),stake=Number(document.getElementById('singleStake').value),label=document.getElementById('singleLabel').value.trim();
+if(!Number.isFinite(o)||o<=1||!Number.isFinite(stake)||stake<=0){alert('Enter valid odds and stake.');return}
+addRecord({type:'single',label:label||'Single bet',count:1,wins:singleResult==='win'?1:0,losses:singleResult==='loss'?1:0,odds:o,stake,result:singleResult,pnl:pnlFor(singleResult,1,stake,o)});
+document.getElementById('singleLabel').value='';nav('dashboard');
+};
+document.getElementById('fixedMode').onclick=()=>{state.method='fixed';render()};
+document.getElementById('percentMode').onclick=()=>{state.method='percent';render()};
+document.getElementById('saveSettings').onclick=()=>{
+let starting=Number(document.getElementById('startingBankroll').value),fixed=Number(document.getElementById('fixedStake').value),pct=Number(document.getElementById('stakePercent').value),odds=Number(document.getElementById('defaultOdds').value);
+if(!Number.isFinite(starting)||starting<0||!Number.isFinite(fixed)||fixed<=0||!Number.isFinite(pct)||pct<=0||pct>100||!Number.isFinite(odds)||odds<=1){alert('Please enter valid settings.');return}
+state.starting=starting;state.fixedStake=fixed;state.percent=pct;state.odds=odds;save();document.getElementById('batchOdds').value=odds;document.getElementById('singleOdds').value=odds;document.getElementById('batchStake').value=suggestedStake();document.getElementById('singleStake').value=suggestedStake();alert('Settings saved.');
+};
+document.getElementById('resetSettings').onclick=()=>{if(confirm('This permanently deletes all saved records and restores defaults. Export your history first if you need it.')){state=JSON.parse(JSON.stringify(defaults));localStorage.removeItem(KEY);save();nav('dashboard')}};
+function renderHistory(){
+let list=document.getElementById('historyList'),filter=document.getElementById('historyFilter').value,rs=[...state.records].reverse().filter(r=>filter==='all'||r.type===filter);
+if(!rs.length){list.innerHTML='<div class="empty">No records to show yet.</div>';return}
+list.innerHTML='';
+rs.forEach(r=>{
+let item=document.createElement('div');item.className='history-item';
+let date=new Date(r.date).toLocaleString([], {month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
+let title=r.label|| (r.type==='batch'?'Batch':'Single bet');
+let result=r.result==='pending'?'<span class="pill">PENDING</span>':r.result==='settled'?`<span class="pill ${r.pnl>=0?'win':'loss'}">${r.wins}W · ${r.losses}L</span>`:`<span class="pill ${r.result}">${r.result.toUpperCase()}</span>`;
+let pnl=r.result==='pending'?'Pending':money(r.pnl);
+item.innerHTML=`<div class="history-top"><div><div class="history-title"></div><div class="history-meta">${date} · ${r.type==='batch'?'Batch':'Single bet'} · ${r.count} bet${r.count===1?'':'s'}</div></div><div style="text-align:right">${result}<div style="font-weight:800;margin-top:6px" class="${r.pnl>0?'green':r.pnl<0?'red':''}">${pnl}</div></div></div><div class="history-bottom"><span>Odds: ${Number(r.odds).toFixed(2)}</span><span>Stake/bet: ${money(r.stake)}</span><button class="danger" style="padding:5px 8px;font-size:11px" data-delete="${r.id}">Delete</button></div>`;
+item.querySelector('.history-title').textContent=title;list.appendChild(item);
+});
+list.querySelectorAll('[data-delete]').forEach(b=>b.onclick=()=>{if(confirm('Delete this history record?')){state.records=state.records.filter(r=>r.id!==b.dataset.delete);save()}});
+}
+document.getElementById('historyFilter').onchange=renderHistory;
+document.getElementById('exportCsv').onclick=()=>{
+const rows=[['date','type','label','bets','wins','losses','odds','stake_per_bet','result','net_pnl']];
+state.records.forEach(r=>rows.push([r.date,r.type,r.label||'',r.count,r.wins,r.losses,r.odds,r.stake,r.result,r.pnl]));
+const csv=rows.map(row=>row.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\r\n');
+const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='bankroll-history.csv';a.click();URL.revokeObjectURL(url);
+};
+render();
+})();
+</script>
+</body>
+</html>
